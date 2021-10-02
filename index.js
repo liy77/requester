@@ -1,6 +1,47 @@
 const HTTPS = require("https");
 const Zlib = require("zlib");
 
+module.exports.MultipartData = class MultipartData {
+  buffers = []
+  
+  /**
+   * @param {String} boundaryName The name of boundary
+   */
+  constructor(boundaryName) {
+    this._boundary = `----------------${boundaryName}`
+  }
+
+  /**
+   * @param {String} name Attachment name
+   * @param {String?} filename File name
+   * @param {any} data Image data
+   */
+  append(name, data, filename) {
+    var str = `\r
+    --${this._boundary}\r
+    Content-Disposition: form-data; name="${name}"`
+
+    if (filename) str += `; filename="${filename}"`
+
+    if (ArrayBuffer.isView(data)) {
+      str +="\r\nContent-Type: application/octet-stream"
+      if (!(data instanceof Uint8Array)) data = new Uint8Array(data.buffer, data.byteOffset, data.byteLength)
+    } else if (typeof data === "object") {
+      str +="\r\nContent-Type: application/json"
+      data = Buffer.from(JSON.stringify(data))
+    } else {
+      data = Buffer.from("" + data);
+    }
+    this.buffers.push(Buffer.from(str + "\r\n\r\n"));
+    this.buffers.push(data);
+  }
+
+  finish() {
+    this.buffers.push(Buffer.from("\r\n--" + this.boundary + "--"));
+    return this.buffers;
+  }
+}
+
 module.exports = class Requester {
   #token;
   #headers;

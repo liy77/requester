@@ -25,6 +25,23 @@ declare interface HTTPSRequestOptions {
 }
 
 declare module "requester" {
+  export class MultipartData {
+    buffers = []
+
+   /**
+    * @param boundaryName The name of boundary
+    */
+    constructor(boundaryName: string)
+
+  /**
+   * @param name Attachment name
+   * @param filename File name
+   * @param data Image data
+   */
+    append(name: string, data: any, filename?: string): void
+    finish(): any[]
+  }
+
   export = class Requester {
     restVersion: number;
     url: string;
