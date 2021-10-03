@@ -1,7 +1,7 @@
 const HTTPS = require("https");
 const Zlib = require("zlib");
 
-module.exports.MultipartData = class MultipartData {
+class MultipartData {
   buffers = []
   
   /**
@@ -41,6 +41,8 @@ module.exports.MultipartData = class MultipartData {
     return this.buffers;
   }
 }
+
+module.exports.MultipartData = MultipartData
 
 module.exports = class Requester {
   #token;
@@ -92,12 +94,11 @@ module.exports = class Requester {
 
     return new Promise((resolve, reject) => {
       const body = options?.body;
+      const url = `${this.url}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`
 
       const req = HTTPS.request(
         {
-          path: `${this.url}${
-            endpoint.startsWith("/") ? endpoint : `/${endpoint}`
-          }`,
+          path: url,
           hostname: this.domain,
           auth: options?.auth ? this.#token : null,
           headers: this.#headers,
@@ -136,6 +137,35 @@ module.exports = class Requester {
 
       req.setHeader("Content-Type", "application/json");
       if (body) {
+        if (body.reason) {
+          let reason = body.reason
+
+          try {
+            if (reason.includes("%") && !reason.includes(" ")) reason = decodeURIComponent(reason)
+          } catch { }
+          
+          req.setHeader("X-Audit-Log-Reason", encodeURIComponent(reason))
+
+          if ((options.method !== "PUT" || !url.includes("/bans")) && (options.method !== "POST" || !url.includes("/prune"))) {
+            delete body.reason
+          } else {
+            body.reason = reason
+          }
+        }
+
+        if (body.attachments) {
+          const MD = new MultipartData("LRD-Requester")
+          
+          for (const attach of body.attachments) {
+            if (!attach.attachment) return
+
+            MD.append(attach.name, attach.attachment, attach.name)
+          }
+
+          MD.append("payload_json", body)
+          body = MD.finish()
+        }
+
         if (Array.isArray(body)) {
           for (const chunk of body) {
             req.write(chunk);
