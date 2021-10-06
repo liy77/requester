@@ -24,7 +24,7 @@ declare interface HTTPSRequestOptions {
   auth?: boolean;
 }
 
-declare module "requester" {
+declare module "discord-request" {
   export class MultipartData {
     buffers = []
 
