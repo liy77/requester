@@ -155,7 +155,7 @@ module.exports = class Requester {
 
         if (body.attachments) {
           const MD = new MultipartData("LRD-Requester")
-          
+          req.setHeader("Content-Type", "multipart/form-data; boundary=" + MD._boundary);
           for (const attach of body.attachments) {
             if (!attach.attachment) return
 
