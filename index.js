@@ -93,7 +93,7 @@ module.exports = class Requester {
     };
 
     return new Promise((resolve, reject) => {
-      const body = options?.body;
+      var body = options?.body;
       const url = `${this.url}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`
 
       const req = HTTPS.request(
