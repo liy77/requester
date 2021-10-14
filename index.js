@@ -215,7 +215,7 @@ module.exports = class Requester {
 
           MD.append("payload_json", json_body)
 
-          body = json_body = MD.finish().filter((buf) => Buffer.isBuffer(buf))
+          body = MD.finish()
         } else {
           body = JSON.stringify(json_body)
         }
@@ -235,3 +235,4 @@ module.exports = class Requester {
 };
 
 module.exports.MultipartData = MultipartData
+
