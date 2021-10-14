@@ -220,7 +220,6 @@ module.exports = class Requester {
           body = JSON.stringify(json_body)
         }
 
-        console.log(req.getHeaders())
         if (Array.isArray(body)) {
           for (const chunk of body) {
             req.write(chunk);
