@@ -42,8 +42,6 @@ class MultipartData {
   }
 }
 
-module.exports.MultipartData = MultipartData
-
 module.exports = class Requester {
   #token;
   #headers;
@@ -179,3 +177,5 @@ module.exports = class Requester {
     });
   }
 };
+
+module.exports.MultipartData = MultipartData
