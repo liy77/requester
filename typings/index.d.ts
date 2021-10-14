@@ -5,10 +5,16 @@ declare interface HTTPSOptions {
   headers: any;
 }
 
+declare interface Attachment {
+  attachment: ArrayBuffer | any,
+  name: string
+}
+
 declare interface HTTPSRequestOptions {
   method?: string;
   body?: any;
   auth?: boolean;
+  attachments?: Attachment[]
 }
 
 declare interface HTTPSOptions {
@@ -24,9 +30,8 @@ declare interface HTTPSRequestOptions {
   auth?: boolean;
 }
 
-declare module "discord-request" {
-  export class MultipartData {
-    buffers = []
+export class MultipartData {
+    buffers: any[]
 
    /**
     * @param boundaryName The name of boundary
@@ -40,9 +45,10 @@ declare module "discord-request" {
    */
     append(name: string, data: any, filename?: string): void
     finish(): any[]
-  }
-
-  export = class Requester {
+}
+  
+declare module "discord-request" {
+  class Requester {
     restVersion: number;
     url: string;
     domain: string;
@@ -60,5 +66,9 @@ declare module "discord-request" {
      * @param options Request options
      */
     request(endpoint: string, options?: HTTPSRequestOptions): Promise<any>
+
+    static MultipartData: typeof MultipartData
   }
+
+  export = Requester
 }

@@ -17,15 +17,54 @@ class MultipartData {
    * @param {any} data Image data
    */
   append(name, data, filename) {
-    var str = `\r
-    --${this._boundary}\r
-    Content-Disposition: form-data; name="${name}"`
+    if(data === undefined) {
+      return;
+    }
 
-    if (filename) str += `; filename="${filename}"`
+    var str = `\r\n--${this._boundary}\r\nContent-Disposition: form-data; name="${name}"`
 
-    if (ArrayBuffer.isView(data)) {
+    var contentType = ""
+
+    if (filename) {
+      str += `; filename="${filename}"`
+
+      const extension = filename.match(/\.(png|apng|gif|jpg|jpeg|webp|svg|json)$/i);
+
+      if (extension) {
+        var ext = extension[1].toLowerCase();
+
+        switch (ext) {
+          case "png":
+          case "apng":
+          case "gif":
+          case "jpg":
+          case "jpeg":
+          case "webp":
+          case "svg": {
+            if(ext === "svg") {
+              ext = "svg+xml";
+            }
+
+            contentType = "image/";
+          break;
+          }
+          case "json": {
+            contentType = "application/";
+          break;
+          }
+        }
+
+        contentType += ext
+      }
+    }
+
+    if (contentType) {
+      str += `\r\nContent-Type: ${contentType}`;
+    } else if (ArrayBuffer.isView(data)) {
       str +="\r\nContent-Type: application/octet-stream"
-      if (!(data instanceof Uint8Array)) data = new Uint8Array(data.buffer, data.byteOffset, data.byteLength)
+      if (!(data instanceof Uint8Array)) {
+        data = new Uint8Array(data.buffer, data.byteOffset, data.byteLength)
+      }
     } else if (typeof data === "object") {
       str +="\r\nContent-Type: application/json"
       data = Buffer.from(JSON.stringify(data))
@@ -151,13 +190,19 @@ module.exports = class Requester {
           }
         }
 
-        if (body.attachments) {
+        if (body.attachments || options.attachments) {
+          const attachments = body.attachments ?? options.attachments
+
           const MD = new MultipartData("LRD-Requester")
           req.setHeader("Content-Type", "multipart/form-data; boundary=" + MD._boundary);
-          for (const attach of body.attachments) {
+          for (const attach of attachments) {
             if (!attach.attachment) return
 
             MD.append(attach.name, attach.attachment, attach.name)
+          }
+
+          if (body.attachments) {
+            delete body.attachments
           }
 
           MD.append("payload_json", body)
