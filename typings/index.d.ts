@@ -14,7 +14,8 @@ declare interface HTTPSRequestOptions {
   method?: string;
   body?: any;
   auth?: boolean;
-  attachments?: Attachment[]
+  attachments?: Attachment[],
+  boundary?: string
 }
 
 declare interface HTTPSOptions {

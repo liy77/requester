@@ -196,7 +196,8 @@ module.exports = class Requester {
         if (json_body.attachments || options.attachments) {
           const attachments = json_body.attachments ?? options.attachments
 
-          const MD = new MultipartData("LRD-Requester")
+          const MD = new MultipartData(options.boundary ?? "Discord-Request")
+          
           req.setHeader("Content-Type", "multipart/form-data; boundary=" + MD._boundary);
           for (const attach of attachments) {
             if (!attach.attachment) return
