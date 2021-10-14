@@ -61,7 +61,7 @@ class MultipartData {
     if (contentType) {
       str += `\r\nContent-Type: ${contentType}`;
     } else if (ArrayBuffer.isView(data)) {
-      str +="\r\nContent-Type: application/octet-stream"
+      str += "\r\nContent-Type: application/octet-stream"
       if (!(data instanceof Uint8Array)) {
         data = new Uint8Array(data.buffer, data.byteOffset, data.byteLength)
       }
@@ -76,7 +76,7 @@ class MultipartData {
   }
 
   finish() {
-    this.buffers.push(Buffer.from("\r\n--" + this.boundary + "--"));
+    this.buffers.push(Buffer.from("\r\n--" + this._boundary + "--"));
     return this.buffers;
   }
 }
@@ -131,6 +131,7 @@ module.exports = class Requester {
 
     return new Promise((resolve, reject) => {
       var body = options?.body;
+
       const url = `${this.url}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`
 
       const req = HTTPS.request(
@@ -174,8 +175,10 @@ module.exports = class Requester {
 
       req.setHeader("Content-Type", "application/json");
       if (body) {
-        if (body.reason) {
-          let reason = body.reason
+        var json_body = JSON.parse(body)
+
+        if (json_body.reason) {
+          let reason = json_body.reason
 
           try {
             if (reason.includes("%") && !reason.includes(" ")) reason = decodeURIComponent(reason)
@@ -184,14 +187,14 @@ module.exports = class Requester {
           req.setHeader("X-Audit-Log-Reason", encodeURIComponent(reason))
 
           if ((options.method !== "PUT" || !url.includes("/bans")) && (options.method !== "POST" || !url.includes("/prune"))) {
-            delete body.reason
+            delete json_body.reason
           } else {
-            body.reason = reason
+            json_body.reason = reason
           }
         }
 
-        if (body.attachments || options.attachments) {
-          const attachments = body.attachments ?? options.attachments
+        if (json_body.attachments || options.attachments) {
+          const attachments = json_body.attachments ?? options.attachments
 
           const MD = new MultipartData("LRD-Requester")
           req.setHeader("Content-Type", "multipart/form-data; boundary=" + MD._boundary);
@@ -201,12 +204,16 @@ module.exports = class Requester {
             MD.append(attach.name, attach.attachment, attach.name)
           }
 
-          if (body.attachments) {
-            delete body.attachments
+          if (json_body.attachments) {
+            delete json_body.attachments
+            json_body = json_body
           }
 
-          MD.append("payload_json", body)
-          body = MD.finish()
+          MD.append("payload_json", json_body)
+
+          body = json_body = MD.finish().filter((buf) => Buffer.isBuffer(buf))
+        } else {
+          body = JSON.stringify(json_body)
         }
 
         if (Array.isArray(body)) {
