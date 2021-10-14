@@ -71,6 +71,7 @@ class MultipartData {
     } else {
       data = Buffer.from("" + data);
     }
+
     this.buffers.push(Buffer.from(str + "\r\n\r\n"));
     this.buffers.push(data);
   }
@@ -127,6 +128,8 @@ module.exports = class Requester {
         typeof options?.body === "object"
           ? JSON.stringify(options.body)
           : options?.body,
+      attachments: options.attachments,
+      boundary: options.boundary
     };
 
     return new Promise((resolve, reject) => {
@@ -217,6 +220,7 @@ module.exports = class Requester {
           body = JSON.stringify(json_body)
         }
 
+        console.log(req.getHeaders())
         if (Array.isArray(body)) {
           for (const chunk of body) {
             req.write(chunk);
